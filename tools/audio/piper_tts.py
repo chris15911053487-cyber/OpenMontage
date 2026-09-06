@@ -39,7 +39,7 @@ class PiperTTS(BaseTool):
         "  pip install piper-tts\n"
         "Or download from https://github.com/rhasspy/piper/releases\n"
         "Then download a voice model:\n"
-        "  piper --download-dir ~/.piper/models --model en_US-lessac-medium"
+        "  python3 -m piper.download_voices en_US-lessac-medium --download-dir ~/.piper/models"
     )
     agent_skills = ["text-to-speech"]
 
@@ -83,6 +83,10 @@ class PiperTTS(BaseTool):
                 "type": "number",
                 "default": 0.3,
             },
+            "data_dir": {
+                "type": "string",
+                "description": "Directory holding the voice .onnx files (default ~/.piper/models)",
+            },
             "output_path": {"type": "string"},
         },
     }
@@ -120,10 +124,13 @@ class PiperTTS(BaseTool):
         output_path = Path(inputs.get("output_path", "tts_output.wav"))
         output_path.parent.mkdir(parents=True, exist_ok=True)
 
+        data_dir = inputs.get("data_dir") or str(Path.home() / ".piper" / "models")
+
         proc = subprocess.run(
             [
                 "piper",
                 "--model", inputs.get("model", "en_US-lessac-medium"),
+                "--data-dir", data_dir,
                 "--speaker", str(inputs.get("speaker_id", 0)),
                 "--length-scale", str(inputs.get("length_scale", 1.0)),
                 "--sentence-silence", str(inputs.get("sentence_silence", 0.3)),
